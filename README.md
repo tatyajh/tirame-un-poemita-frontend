@@ -1,36 +1,38 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Tírame un Poemita — frontend
 
-## Getting Started
+Interfaz web para [tirame-un-poemita](https://github.com/jorge-henao/tirame-un-poemita): poemas al azar, búsqueda semántica y reproducción de audio, con una estética de máquina de escribir — papel envejecido, tipografía `Special Elite`/`Courier Prime`, texto que se teclea letra por letra con su propio sonido, y un reproductor de audio con forma de carrete de cinta.
 
-First, run the development server:
+## Requisitos
+
+- Node.js 20+
+- El backend (Query Service) corriendo — ver el repo principal `tirame-un-poemita`, típicamente con:
+
+  ```bash
+  uvicorn src.query.main:app --reload
+  ```
+
+  por defecto en `http://localhost:8000`, con CORS abierto.
+
+## Arranque
 
 ```bash
+npm install
+cp .env.example .env.local   # ajusta NEXT_PUBLIC_API_URL si el backend no está en localhost:8000
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abre [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Estructura
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `src/lib/api.ts` — cliente tipado del Query Service (`/api/v1/poems/*`, `/api/v1/authors`).
+- `src/lib/typewriterSound.ts` — sonidos de tecla/carro sintetizados con Web Audio API (sin archivos de audio externos).
+- `src/components/TypewriterText.tsx` — revela texto letra por letra con cursor parpadeante.
+- `src/components/TypewriterAudioPlayer.tsx` — reproductor de audio custom (carrete + cinta de progreso) sobre el endpoint de audio con soporte de Range Requests.
+- Rutas: `/` (poema aleatorio), `/buscar` (búsqueda semántica), `/poema/[id]`, `/autores`, `/autor/[nombre]`.
 
-## Learn More
+## Variables de entorno
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Variable | Descripción | Default |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | URL base del Query Service | `http://localhost:8000` |

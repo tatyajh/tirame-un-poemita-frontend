@@ -1,26 +1,185 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --paper: #f2e8d5;
+  --paper-deep: #e7dabd;
+  --ink: #211c14;
+  --ink-soft: #4a4335;
+  --ink-red: #7d1d1d;
+  --ink-red-bright: #a4291f;
+  --gold: #9c7a3c;
+  --line: rgba(33, 28, 20, 0.18);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-paper: var(--paper);
+  --color-paper-deep: var(--paper-deep);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-red: var(--ink-red);
+  --color-ink-red-bright: var(--ink-red-bright);
+  --color-gold: var(--gold);
+  --font-type: var(--font-special-elite);
+  --font-mono-poem: var(--font-courier-prime);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-courier-prime), "Courier New", monospace;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* ---- paper texture: layered grain + vignette + faint fibers ---- */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/></svg>");
+  background-size: 220px 220px;
+}
+
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 8%, rgba(125, 29, 29, 0.05), transparent 32%),
+    radial-gradient(circle at 88% 92%, rgba(125, 29, 29, 0.05), transparent 32%),
+    radial-gradient(ellipse at center, rgba(242, 232, 213, 0) 45%, rgba(74, 60, 30, 0.22) 100%);
+}
+
+#app-root {
+  position: relative;
+  z-index: 1;
+}
+
+::selection {
+  background: var(--ink-red);
+  color: var(--paper);
+}
+
+/* thin, inky scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--paper-deep);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ink-soft);
+  border-radius: 0;
+  border: 2px solid var(--paper-deep);
+}
+
+a {
+  color: inherit;
+}
+
+/* ---- typewriter caret ---- */
+@keyframes caret-blink {
+  0%,
+  45% {
+    opacity: 1;
+  }
+  46%,
+  100% {
+    opacity: 0;
+  }
+}
+.tw-caret {
+  display: inline-block;
+  width: 0.55em;
+  background: var(--ink-red);
+  animation: caret-blink 0.85s steps(1) infinite;
+  margin-left: 1px;
+  vertical-align: baseline;
+  height: 1em;
+  transform: translateY(0.12em);
+}
+
+/* ---- key jitter on typed characters ---- */
+@keyframes strike-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-2px) scale(1.15);
+    filter: blur(0.5px);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+.tw-char {
+  display: inline-block;
+  animation: strike-in 0.09s ease-out;
+}
+
+/* ---- ribbon progress for the audio player ---- */
+@keyframes spool {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+.spool-spin {
+  animation: spool 3.2s linear infinite;
+}
+.spool-spin[data-paused="true"] {
+  animation-play-state: paused;
+}
+
+/* ---- torn paper edge ---- */
+.torn-top {
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='16' viewBox='0 0 400 16' preserveAspectRatio='none'><path d='M0 8 L10 3 L22 11 L34 2 L47 9 L58 4 L71 12 L84 3 L96 8 L109 2 L121 10 L134 5 L146 12 L159 3 L171 9 L184 4 L196 11 L209 2 L221 8 L234 4 L246 12 L259 3 L271 9 L284 5 L296 11 L309 2 L321 9 L334 4 L346 12 L358 3 L371 8 L384 4 L400 8 L400 16 L0 16 Z'/></svg>");
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='400' height='16' viewBox='0 0 400 16' preserveAspectRatio='none'><path d='M0 8 L10 3 L22 11 L34 2 L47 9 L58 4 L71 12 L84 3 L96 8 L109 2 L121 10 L134 5 L146 12 L159 3 L171 9 L184 4 L196 11 L209 2 L221 8 L234 4 L246 12 L259 3 L271 9 L284 5 L296 11 L309 2 L321 9 L334 4 L346 12 L358 3 L371 8 L384 4 L400 8 L400 16 L0 16 Z'/></svg>");
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+.stamp-rotate {
+  transform: rotate(-6deg);
+}
+
+.underline-ink {
+  text-decoration: underline;
+  text-decoration-color: var(--ink-red);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+
+@keyframes fade-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.page-enter {
+  animation: fade-page-in 0.5s ease-out both;
 }
