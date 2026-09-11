@@ -56,11 +56,15 @@ export default function TypewriterText({
 
   return (
     <span className={className}>
-      {shown.split("").map((char, i) => (
-        <span key={i} className="tw-char">
-          {char === "\n" ? <br /> : char}
-        </span>
-      ))}
+      {shown.split("").map((char, i) =>
+        char === "\n" ? (
+          <br key={i} />
+        ) : (
+          <span key={i} className="tw-char">
+            {char}
+          </span>
+        ),
+      )}
       {!finished && <span className="tw-caret" aria-hidden />}
     </span>
   );

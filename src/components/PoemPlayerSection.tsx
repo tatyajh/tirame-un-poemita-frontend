@@ -10,22 +10,22 @@ export default function PoemPlayerSection({ poemId }: { poemId: number }) {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    const controller = new AbortController();
     setAudioUrl(null);
     setError(false);
 
-    getAudioDePoema(poemId)
+    getAudioDePoema(poemId, false, controller.signal)
       .then((audio) => {
-        if (cancelled) return;
         setAudioUrl(audioUrlFor(audio.audio_url));
         setNarrador(audio.narrador);
       })
-      .catch(() => {
-        if (!cancelled) setError(true);
+      .catch((err) => {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        setError(true);
       });
 
     return () => {
-      cancelled = true;
+      controller.abort();
     };
   }, [poemId]);
 

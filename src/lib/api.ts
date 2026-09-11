@@ -58,7 +58,11 @@ export class PoemNotFoundError extends Error {
   }
 }
 
-async function apiGet<T>(path: string, params?: Record<string, string | number | boolean>) {
+async function apiGet<T>(
+  path: string,
+  params?: Record<string, string | number | boolean>,
+  signal?: AbortSignal,
+) {
   const url = new URL(`${API_BASE_URL}${path}`);
   if (params) {
     for (const [key, value] of Object.entries(params)) {
@@ -68,7 +72,7 @@ async function apiGet<T>(path: string, params?: Record<string, string | number |
     }
   }
 
-  const res = await fetch(url.toString(), { cache: "no-store" });
+  const res = await fetch(url.toString(), { cache: "no-store", signal });
 
   if (!res.ok) {
     if (res.status === 404) {
@@ -111,8 +115,13 @@ export async function buscarPorAutor(autor: string, limit = 20): Promise<Respues
 export async function getAudioDePoema(
   poemId: number | string,
   withMusic = false,
+  signal?: AbortSignal,
 ): Promise<RespuestaAudio> {
-  return apiGet<RespuestaAudio>(`/api/v1/poems/${poemId}/audio`, { with_music: withMusic });
+  return apiGet<RespuestaAudio>(
+    `/api/v1/poems/${poemId}/audio`,
+    { with_music: withMusic },
+    signal,
+  );
 }
 
 export async function listarAutores(search?: string, limit = 60): Promise<RespuestaAutores> {
