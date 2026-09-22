@@ -1,0 +1,7 @@
+:HL["/tirame-un-poemita-frontend/_next/static/chunks/3-iujq-3y6eso.css","style"]
+:HL["/tirame-un-poemita-frontend/_next/static/media/1f77ba59f1814ecf-s.p.343gipfaf_jw6.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/tirame-un-poemita-frontend/_next/static/media/23071b8b14aa0543-s.p.3u60v9xgf7_rc.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/tirame-un-poemita-frontend/_next/static/media/5f440d3eea613716-s.p.1xmps1tcyqv34.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/tirame-un-poemita-frontend/_next/static/media/748b8b5301d2bdb2-s.p.1zvx97hkh1y6p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+:HL["/tirame-un-poemita-frontend/_next/static/media/87d3ffffac5dafea-s.p.3a10o7es2neby.woff2","font",{"crossOrigin":"","type":"font/woff2"}]
+0:{"tree":{"name":"","param":null,"prefetchHints":4176,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4256,"slots":null}}},"staleTime":300,"buildId":"ymASdEPn5YP8wc-GOLZuL"}
