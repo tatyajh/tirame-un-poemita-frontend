@@ -1,17 +1,26 @@
+"use client";
+
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import MachineDown from "@/components/MachineDown";
 import PoemCard from "@/components/PoemCard";
 import SearchBar from "@/components/SearchBar";
-import { buscarPoemasSemantico } from "@/lib/api";
+import { buscarPoemasSemantico, type RespuestaBusqueda } from "@/lib/api";
 
-export default async function BuscarPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
-  const { q } = await searchParams;
-  const query = q?.trim() ?? "";
-  const resultados =
-    query.length >= 3 ? await buscarPoemasSemantico(query, 12).catch(() => null) : undefined;
+function BuscarContent() {
+  const searchParams = useSearchParams();
+  const query = searchParams.get("q")?.trim() ?? "";
+  const [resultados, setResultados] = useState<RespuestaBusqueda | null | undefined>(undefined);
+
+  useEffect(() => {
+    if (query.length < 3) {
+      setResultados(undefined);
+      return;
+    }
+    buscarPoemasSemantico(query, 12)
+      .then(setResultados)
+      .catch(() => setResultados(null));
+  }, [query]);
 
   return (
     <div className="page-enter px-6 py-12 max-w-4xl mx-auto w-full flex flex-col gap-8">
@@ -44,5 +53,13 @@ export default async function BuscarPage({
         </div>
       )}
     </div>
+  );
+}
+
+export default function BuscarPage() {
+  return (
+    <Suspense fallback={null}>
+      <BuscarContent />
+    </Suspense>
   );
 }

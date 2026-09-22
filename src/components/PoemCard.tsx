@@ -6,7 +6,7 @@ export default function PoemCard({ poema, score }: { poema: Poema; score?: numbe
 
   return (
     <Link
-      href={`/poema/${poema.id}`}
+      href={`/poema?id=${poema.id}`}
       className="group block border border-ink/25 bg-paper-deep/40 p-5 transition-all hover:-translate-y-0.5 hover:border-ink-red hover:shadow-[4px_4px_0_var(--ink)]"
     >
       <div className="flex items-baseline justify-between gap-3">

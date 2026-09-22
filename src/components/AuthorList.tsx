@@ -11,7 +11,7 @@ export default function AuthorList({ authors }: { authors: Autor[] }) {
       {authors.map((autor) => (
         <li key={autor.id} className="bg-paper">
           <Link
-            href={`/autor/${encodeURIComponent(autor.nombre)}`}
+            href={`/autor?nombre=${encodeURIComponent(autor.nombre)}`}
             className="flex items-baseline justify-between gap-3 px-4 py-3 hover:bg-ink-red/10 transition-colors"
           >
             <span className="font-type">{autor.nombre}</span>

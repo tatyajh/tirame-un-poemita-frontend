@@ -1,9 +1,18 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import AuthorList from "@/components/AuthorList";
 import MachineDown from "@/components/MachineDown";
-import { listarAutores } from "@/lib/api";
+import { listarAutores, type RespuestaAutores } from "@/lib/api";
 
-export default async function AutoresPage() {
-  const data = await listarAutores(undefined, 100).catch(() => null);
+export default function AutoresPage() {
+  const [data, setData] = useState<RespuestaAutores | null | undefined>(undefined);
+
+  useEffect(() => {
+    listarAutores(undefined, 100)
+      .then(setData)
+      .catch(() => setData(null));
+  }, []);
 
   return (
     <div className="page-enter px-6 py-12 max-w-3xl mx-auto w-full flex flex-col gap-6">
@@ -15,7 +24,7 @@ export default async function AutoresPage() {
           </p>
         )}
       </div>
-      {data ? <AuthorList authors={data.authors} /> : <MachineDown />}
+      {data === undefined ? null : data ? <AuthorList authors={data.authors} /> : <MachineDown />}
     </div>
   );
 }

@@ -71,7 +71,7 @@ export default function Home() {
           </button>
           {poema && (
             <Link
-              href={`/poema/${poema.id}`}
+              href={`/poema?id=${poema.id}`}
               className="border-2 border-ink-red text-ink-red px-4 py-2 font-type text-sm hover:bg-ink-red hover:text-paper transition-colors"
             >
               escuchar este poema →
