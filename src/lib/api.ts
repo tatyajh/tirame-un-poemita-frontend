@@ -127,3 +127,43 @@ export async function getAudioDePoema(
 export async function listarAutores(search?: string, limit = 60): Promise<RespuestaAutores> {
   return apiGet<RespuestaAutores>("/api/v1/authors", { search: search ?? "", limit });
 }
+
+export interface ProsodyOverrides {
+  prosody_mode?: "break" | "segment";
+  break_seconds?: number;
+  stanza_break_seconds?: number;
+  stability?: number;
+  similarity_boost?: number;
+  style?: number;
+  speed?: number;
+  use_speaker_boost?: boolean;
+}
+
+export interface RespuestaPreview {
+  audio_url: string;
+  poem_id: number;
+  duration_seconds: number;
+  settings_used: Required<Omit<ProsodyOverrides, "use_speaker_boost">>;
+}
+
+export async function previsualizarProsodia(
+  poemId: number | string,
+  overrides: ProsodyOverrides,
+  signal?: AbortSignal,
+): Promise<RespuestaPreview> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/poems/${poemId}/audio/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(overrides),
+    cache: "no-store",
+    signal,
+  });
+
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    const message = body?.detail?.message ?? body?.detail ?? `Error ${res.status}`;
+    throw new Error(typeof message === "string" ? message : JSON.stringify(message));
+  }
+
+  return (await res.json()) as RespuestaPreview;
+}

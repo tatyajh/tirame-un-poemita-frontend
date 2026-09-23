@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import MachineDown from "@/components/MachineDown";
 import PoemPlayerSection from "@/components/PoemPlayerSection";
+import ProsodyTuningPanel from "@/components/ProsodyTuningPanel";
 import TypewriterText from "@/components/TypewriterText";
 import { PoemNotFoundError, getPoemaPorId, type Poema } from "@/lib/api";
 
@@ -77,6 +78,7 @@ function PoemaContent() {
       />
 
       <PoemPlayerSection poemId={poema.id} />
+      <ProsodyTuningPanel poemId={poema.id} />
     </div>
   );
 }
