@@ -98,7 +98,7 @@ export default function ProsodyTuningPanel({ poemId }: { poemId: number }) {
       </div>
 
       <div className="flex gap-2 font-mono-poem text-xs">
-        {(["break", "segment"] as const).map((mode) => (
+        {(["break", "segment", "sts"] as const).map((mode) => (
           <button
             key={mode}
             type="button"
@@ -114,23 +114,34 @@ export default function ProsodyTuningPanel({ poemId }: { poemId: number }) {
         ))}
       </div>
 
+      {values.prosody_mode === "sts" && (
+        <p className="font-mono-poem text-[11px] text-ink-soft border border-ink/15 px-3 py-2">
+          En modo <strong>sts</strong> el ritmo viene de una lectura natural convertida a la
+          voz — las pausas por línea/estrofa no aplican aquí, solo los parámetros de voz.
+        </p>
+      )}
+
       <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-        <Slider
-          label="pausa por línea (s)"
-          value={values.break_seconds}
-          min={0}
-          max={2}
-          step={0.05}
-          onChange={(v) => set("break_seconds", v)}
-        />
-        <Slider
-          label="pausa por estrofa (s)"
-          value={values.stanza_break_seconds}
-          min={0}
-          max={4}
-          step={0.1}
-          onChange={(v) => set("stanza_break_seconds", v)}
-        />
+        {values.prosody_mode !== "sts" && (
+          <>
+            <Slider
+              label="pausa por línea (s)"
+              value={values.break_seconds}
+              min={0}
+              max={2}
+              step={0.05}
+              onChange={(v) => set("break_seconds", v)}
+            />
+            <Slider
+              label="pausa por estrofa (s)"
+              value={values.stanza_break_seconds}
+              min={0}
+              max={4}
+              step={0.1}
+              onChange={(v) => set("stanza_break_seconds", v)}
+            />
+          </>
+        )}
         <Slider
           label="stability"
           value={values.stability}

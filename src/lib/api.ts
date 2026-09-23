@@ -129,7 +129,7 @@ export async function listarAutores(search?: string, limit = 60): Promise<Respue
 }
 
 export interface ProsodyOverrides {
-  prosody_mode?: "break" | "segment";
+  prosody_mode?: "break" | "segment" | "sts";
   break_seconds?: number;
   stanza_break_seconds?: number;
   stability?: number;
