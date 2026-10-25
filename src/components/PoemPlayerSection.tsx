@@ -36,6 +36,28 @@ type Resultado =
   | { key: string; audioUrl: string; narrador: string | null; conMusica: boolean; error: false }
   | { key: string; error: true };
 
+function IconoMusica({ encendida }: { encendida: boolean }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      aria-hidden="true"
+      className={encendida ? "text-ink-red" : "text-ink-soft"}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M9 18V5l11-2v13" />
+      <circle cx="6" cy="18" r="3" fill={encendida ? "currentColor" : "none"} />
+      <circle cx="17" cy="16" r="3" fill={encendida ? "currentColor" : "none"} />
+      {!encendida && <path d="M3 3l18 18" />}
+    </svg>
+  );
+}
+
 export default function PoemPlayerSection({ poemId }: { poemId: number }) {
   const [attempt, setAttempt] = useState(0);
   const [lectura, setLectura] = useState<Lectura>(lecturaGuardada);
@@ -119,12 +141,24 @@ export default function PoemPlayerSection({ poemId }: { poemId: number }) {
         type="button"
         role="switch"
         aria-checked={musica}
+        aria-label={musica ? "Música encendida" : "Música apagada"}
+        title={musica ? "Apagar la música" : "Encender la música"}
         onClick={alternarMusica}
-        className={`mt-2 px-3 py-1 border font-mono-poem text-xs uppercase tracking-wide transition-colors ${
-          musica ? "border-ink-red text-ink-red" : "border-ink/20 text-ink-soft hover:border-ink/40"
-        }`}
+        className="mt-3 inline-flex items-center gap-2 group"
       >
-        {musica ? "♪ con música" : "sin música"}
+        <IconoMusica encendida={musica} />
+        <span
+          aria-hidden="true"
+          className={`relative inline-block h-5 w-9 rounded-full border transition-colors ${
+            musica ? "bg-ink-red border-ink-red" : "bg-transparent border-ink/30"
+          }`}
+        >
+          <span
+            className={`absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full transition-all ${
+              musica ? "left-[18px] bg-paper" : "left-[2px] bg-ink/40"
+            }`}
+          />
+        </span>
       </button>
       {musica && actualListo && !actualListo.conMusica && (
         <p className="mt-1 font-mono-poem text-[11px] text-ink-soft">
