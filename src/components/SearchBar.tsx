@@ -17,13 +17,13 @@ export default function SearchBar({ initialQuery = "" }: { initialQuery?: string
   return (
     <form onSubmit={onSubmit} className="w-full max-w-xl">
       <label className="block text-xs uppercase tracking-[0.25em] text-ink-soft mb-2">
-        dicta un sentimiento, la máquina busca el poema
+        busca por título, autor, un verso o lo que sientes
       </label>
       <div className="flex items-stretch border-2 border-ink bg-paper-deep/60">
         <input
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="soledad, mar, un amor que no vuelve…"
+          placeholder="Bécquer, golondrinas, un amor que no vuelve…"
           className="flex-1 bg-transparent px-4 py-3 font-mono-poem text-ink placeholder:text-ink-soft/60 outline-none"
         />
         <button
