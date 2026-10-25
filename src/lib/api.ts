@@ -151,7 +151,7 @@ export async function getAudioDePoema(
   poemId: number | string,
   withMusic = false,
   signal?: AbortSignal,
-  lectura: Lectura = "directa",
+  lectura: Lectura = "guia",
 ): Promise<RespuestaAudio> {
   return apiGet<RespuestaAudio>(
     `/api/v1/poems/${poemId}/audio`,

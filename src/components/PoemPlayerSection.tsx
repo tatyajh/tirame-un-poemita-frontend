@@ -4,15 +4,17 @@ import { useEffect, useState } from "react";
 import TypewriterAudioPlayer from "@/components/TypewriterAudioPlayer";
 import { audioUrlFor, getAudioDePoema, type Lectura } from "@/lib/api";
 
+// "guia" (Voice Changer) is the default reading.
 const OPCIONES: { value: Lectura; label: string; detalle: string }[] = [
-  { value: "directa", label: "Voz de Edgar", detalle: "su voz clonada lee el poema" },
   {
     value: "guia",
     label: "Edgar guiado",
     detalle: "un narrador paisa lee y se convierte a su voz",
   },
+  { value: "directa", label: "Voz de Edgar", detalle: "su voz clonada lee el poema" },
 ];
-const STORAGE_KEY = "tirame-lectura";
+// v2: the default changed to "guia", so earlier saved choices start over.
+const STORAGE_KEY = "tirame-lectura-v2";
 const MUSICA_KEY = "tirame-musica";
 
 function musicaGuardada(): boolean {
@@ -26,9 +28,9 @@ function musicaGuardada(): boolean {
 function lecturaGuardada(): Lectura {
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === "guia" ? "guia" : "directa";
+    return v === "directa" ? "directa" : "guia";
   } catch {
-    return "directa";
+    return "guia";
   }
 }
 
