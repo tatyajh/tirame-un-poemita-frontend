@@ -7,7 +7,7 @@ import MachineDown from "@/components/MachineDown";
 import PoemPlayerSection from "@/components/PoemPlayerSection";
 import ProsodyTuningPanel from "@/components/ProsodyTuningPanel";
 import TypewriterText from "@/components/TypewriterText";
-import { PoemNotFoundError, getPoemaPorId, type Poema } from "@/lib/api";
+import { PoemNotFoundError, etiquetaSentimientos, getPoemaPorId, type Poema } from "@/lib/api";
 
 function PoemaContent() {
   const searchParams = useSearchParams();
@@ -71,9 +71,9 @@ function PoemaContent() {
           </Link>
         )}
         <h1 className="font-type text-2xl sm:text-3xl mt-1">{poema.titulo}</h1>
-        {poema.sentimiento_nombre && (
+        {etiquetaSentimientos(poema) && (
           <p className="font-mono-poem text-xs text-ink-red/80 mt-1">
-            {poema.sentimiento_nombre.toLowerCase()}
+            {etiquetaSentimientos(poema)}
           </p>
         )}
       </div>

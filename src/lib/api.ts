@@ -15,6 +15,18 @@ export interface Poema {
   autor: Autor | null;
   sentimiento?: string | null;
   sentimiento_nombre?: string | null;
+  /** Every sentiment of the poem, main one first. */
+  sentimientos?: { slug: string; nombre: string }[];
+}
+
+/** "duelo · familia" (lower case), falling back to the main sentiment. */
+export function etiquetaSentimientos(p: Poema): string | null {
+  const nombres = p.sentimientos?.length
+    ? p.sentimientos.map((s) => s.nombre)
+    : p.sentimiento_nombre
+      ? [p.sentimiento_nombre]
+      : [];
+  return nombres.length ? nombres.join(" · ").toLowerCase() : null;
 }
 
 export interface Sentimiento {

@@ -9,6 +9,7 @@ import {
   listarSentimientos,
   type Poema,
   type Sentimiento,
+  etiquetaSentimientos,
 } from "@/lib/api";
 
 export default function Home() {
@@ -95,12 +96,13 @@ export default function Home() {
                   {poema.autor.nombre}
                 </p>
               )}
-              {poema.sentimiento_nombre && (
+              {etiquetaSentimientos(poema) ? (
                 <p className="font-mono-poem text-[11px] text-ink-red/80 mb-6">
-                  {poema.sentimiento_nombre.toLowerCase()}
+                  {etiquetaSentimientos(poema)}
                 </p>
+              ) : (
+                <div className="mb-5" />
               )}
-              {!poema.sentimiento_nombre && <div className="mb-5" />}
               <TypewriterText
                 key={poema.id}
                 text={poema.contenido}

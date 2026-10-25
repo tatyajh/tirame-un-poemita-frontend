@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { agregarPoema, listarSentimientos, type Poema, type Sentimiento } from "@/lib/api";
+import {
+  agregarPoema,
+  etiquetaSentimientos,
+  listarSentimientos,
+  type Poema,
+  type Sentimiento,
+} from "@/lib/api";
 
 const KEY_STORAGE = "tirame-admin-key";
 
@@ -79,8 +85,8 @@ export default function AgregarPoema() {
             {agregado.autor ? ` — ${agregado.autor.nombre}` : ""}
           </p>
           <p className="text-ink-red mt-1">
-            {agregado.sentimiento_nombre
-              ? `sentimiento: ${agregado.sentimiento_nombre.toLowerCase()}`
+            {etiquetaSentimientos(agregado)
+              ? `sentimientos: ${etiquetaSentimientos(agregado)}`
               : "sentimiento: pendiente (se clasifica en el próximo reinicio)"}
           </p>
           <Link href={`/poema?id=${agregado.id}`} className="underline mt-2 inline-block">
