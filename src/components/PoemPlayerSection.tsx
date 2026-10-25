@@ -13,6 +13,15 @@ const OPCIONES: { value: Lectura; label: string; detalle: string }[] = [
   },
 ];
 const STORAGE_KEY = "tirame-lectura";
+const MUSICA_KEY = "tirame-musica";
+
+function musicaGuardada(): boolean {
+  try {
+    return window.localStorage.getItem(MUSICA_KEY) !== "no";
+  } catch {
+    return true;
+  }
+}
 
 function lecturaGuardada(): Lectura {
   try {
@@ -24,15 +33,16 @@ function lecturaGuardada(): Lectura {
 }
 
 type Resultado =
-  | { key: string; audioUrl: string; narrador: string | null; error: false }
+  | { key: string; audioUrl: string; narrador: string | null; conMusica: boolean; error: false }
   | { key: string; error: true };
 
 export default function PoemPlayerSection({ poemId }: { poemId: number }) {
   const [attempt, setAttempt] = useState(0);
   const [lectura, setLectura] = useState<Lectura>(lecturaGuardada);
+  const [musica, setMusica] = useState<boolean>(musicaGuardada);
   const [resultado, setResultado] = useState<Resultado | null>(null);
   const [slowKey, setSlowKey] = useState<string | null>(null);
-  const key = `${poemId}:${lectura}:${attempt}`;
+  const key = `${poemId}:${lectura}:${musica}:${attempt}`;
 
   function escoger(value: Lectura) {
     setLectura(value);
@@ -43,17 +53,28 @@ export default function PoemPlayerSection({ poemId }: { poemId: number }) {
     }
   }
 
+  function alternarMusica() {
+    const value = !musica;
+    setMusica(value);
+    try {
+      window.localStorage.setItem(MUSICA_KEY, value ? "si" : "no");
+    } catch {
+      // storage unavailable: not remembered
+    }
+  }
+
   useEffect(() => {
     const controller = new AbortController();
     // A poem read for the first time is synthesized on the spot (~20-40 s).
     const slowTimer = setTimeout(() => setSlowKey(key), 4000);
 
-    getAudioDePoema(poemId, false, controller.signal, lectura)
+    getAudioDePoema(poemId, musica, controller.signal, lectura)
       .then((audio) => {
         setResultado({
           key,
           audioUrl: audioUrlFor(audio.audio_url),
           narrador: audio.narrador,
+          conMusica: audio.with_music,
           error: false,
         });
       })
@@ -67,9 +88,10 @@ export default function PoemPlayerSection({ poemId }: { poemId: number }) {
       clearTimeout(slowTimer);
       controller.abort();
     };
-  }, [poemId, lectura, key]);
+  }, [poemId, lectura, musica, key]);
 
   const actual = resultado?.key === key ? resultado : null;
+  const actualListo = actual && !actual.error ? actual : null;
   const opcion = OPCIONES.find((o) => o.value === lectura) ?? OPCIONES[0];
 
   const selector = (
@@ -93,6 +115,22 @@ export default function PoemPlayerSection({ poemId }: { poemId: number }) {
         ))}
       </div>
       <p className="mt-1 font-mono-poem text-[11px] text-ink-soft">{opcion.detalle}</p>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={musica}
+        onClick={alternarMusica}
+        className={`mt-2 px-3 py-1 border font-mono-poem text-xs uppercase tracking-wide transition-colors ${
+          musica ? "border-ink-red text-ink-red" : "border-ink/20 text-ink-soft hover:border-ink/40"
+        }`}
+      >
+        {musica ? "♪ con música" : "sin música"}
+      </button>
+      {musica && actualListo && !actualListo.conMusica && (
+        <p className="mt-1 font-mono-poem text-[11px] text-ink-soft">
+          este poema todavía no tiene música: suena solo la voz.
+        </p>
+      )}
     </div>
   );
 
