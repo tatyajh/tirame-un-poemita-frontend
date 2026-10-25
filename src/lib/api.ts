@@ -112,14 +112,19 @@ export async function buscarPorAutor(autor: string, limit = 20): Promise<Respues
   return apiGet<RespuestaBusqueda>("/api/v1/poems/by-author", { author: autor, limit });
 }
 
+/** "directa": the Edgar clone reads. "guia": Anyelo reads and Voice Changer
+ * turns it into Edgar's voice. */
+export type Lectura = "directa" | "guia";
+
 export async function getAudioDePoema(
   poemId: number | string,
   withMusic = false,
   signal?: AbortSignal,
+  lectura: Lectura = "directa",
 ): Promise<RespuestaAudio> {
   return apiGet<RespuestaAudio>(
     `/api/v1/poems/${poemId}/audio`,
-    { with_music: withMusic },
+    { with_music: withMusic, lectura },
     signal,
   );
 }
