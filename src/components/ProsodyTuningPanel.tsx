@@ -4,7 +4,7 @@ import { useState } from "react";
 import { audioUrlFor, previsualizarProsodia, type ProsodyOverrides } from "@/lib/api";
 
 const DEFAULTS: Required<Omit<ProsodyOverrides, "use_speaker_boost">> = {
-  prosody_mode: "break",
+  prosody_mode: "continuous",
   break_seconds: 0.5,
   stanza_break_seconds: 1.0,
   stability: 0.65,
@@ -47,7 +47,13 @@ function Slider({
   );
 }
 
-export default function ProsodyTuningPanel({ poemId }: { poemId: number }) {
+export default function ProsodyTuningPanel({
+  poemId,
+  previewKey,
+}: {
+  poemId: number;
+  previewKey?: string;
+}) {
   const [open, setOpen] = useState(false);
   const [values, setValues] = useState(DEFAULTS);
   const [loading, setLoading] = useState(false);
@@ -62,7 +68,7 @@ export default function ProsodyTuningPanel({ poemId }: { poemId: number }) {
     setLoading(true);
     setError(null);
     try {
-      const result = await previsualizarProsodia(poemId, values);
+      const result = await previsualizarProsodia(poemId, values, undefined, previewKey || undefined);
       setPreviewUrl(audioUrlFor(result.audio_url));
       setPreviewInfo(`${result.duration_seconds.toFixed(1)}s · modo ${values.prosody_mode}`);
     } catch (err) {
@@ -98,7 +104,7 @@ export default function ProsodyTuningPanel({ poemId }: { poemId: number }) {
       </div>
 
       <div className="flex gap-2 font-mono-poem text-xs">
-        {(["break", "segment", "sts"] as const).map((mode) => (
+        {(["continuous", "break", "segment", "sts"] as const).map((mode) => (
           <button
             key={mode}
             type="button"
@@ -114,6 +120,13 @@ export default function ProsodyTuningPanel({ poemId }: { poemId: number }) {
         ))}
       </div>
 
+      {values.prosody_mode === "continuous" && (
+        <p className="font-mono-poem text-[11px] text-ink-soft border border-ink/15 px-3 py-2">
+          En modo <strong>continuous</strong> el poema se lee de corrido en una sola pieza y la
+          voz hace sus propias pausas; al final se aplica el cierre en la última palabra.
+        </p>
+      )}
+
       {values.prosody_mode === "sts" && (
         <p className="font-mono-poem text-[11px] text-ink-soft border border-ink/15 px-3 py-2">
           En modo <strong>sts</strong> el ritmo viene de una lectura natural convertida a la
@@ -122,7 +135,7 @@ export default function ProsodyTuningPanel({ poemId }: { poemId: number }) {
       )}
 
       <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-        {values.prosody_mode !== "sts" && (
+        {(values.prosody_mode === "break" || values.prosody_mode === "segment") && (
           <>
             <Slider
               label="pausa por línea (s)"

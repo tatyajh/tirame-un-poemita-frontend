@@ -12,6 +12,9 @@ import { PoemNotFoundError, getPoemaPorId, type Poema } from "@/lib/api";
 function PoemaContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id") ?? "";
+  // The voice-tuning panel spends ElevenLabs credits, so it only shows for
+  // the team: open a poem with ?ajustes=<PREVIEW_KEY> to use it.
+  const ajustesKey = searchParams.get("ajustes");
   const [poema, setPoema] = useState<Poema | null | undefined>(undefined);
   const [notFound, setNotFound] = useState(false);
 
@@ -78,7 +81,9 @@ function PoemaContent() {
       />
 
       <PoemPlayerSection poemId={poema.id} />
-      <ProsodyTuningPanel poemId={poema.id} />
+      {ajustesKey !== null && (
+        <ProsodyTuningPanel poemId={poema.id} previewKey={ajustesKey} />
+      )}
     </div>
   );
 }

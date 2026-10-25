@@ -129,7 +129,7 @@ export async function listarAutores(search?: string, limit = 60): Promise<Respue
 }
 
 export interface ProsodyOverrides {
-  prosody_mode?: "break" | "segment" | "sts";
+  prosody_mode?: "continuous" | "break" | "segment" | "sts";
   break_seconds?: number;
   stanza_break_seconds?: number;
   stability?: number;
@@ -150,10 +150,14 @@ export async function previsualizarProsodia(
   poemId: number | string,
   overrides: ProsodyOverrides,
   signal?: AbortSignal,
+  previewKey?: string,
 ): Promise<RespuestaPreview> {
   const res = await fetch(`${API_BASE_URL}/api/v1/poems/${poemId}/audio/preview`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(previewKey ? { "X-Preview-Key": previewKey } : {}),
+    },
     body: JSON.stringify(overrides),
     cache: "no-store",
     signal,
