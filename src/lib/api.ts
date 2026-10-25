@@ -195,3 +195,43 @@ export async function previsualizarProsodia(
 
   return (await res.json()) as RespuestaPreview;
 }
+
+export interface PoemaNuevo {
+  titulo: string;
+  contenido: string;
+  autor: string;
+  nacionalidad?: string | null;
+  epoca?: string | null;
+  /** Empty = Claude decides the sentiment. */
+  sentimiento?: string | null;
+}
+
+export async function agregarPoema(poema: PoemaNuevo, adminKey: string): Promise<Poema> {
+  const body: Record<string, string> = {
+    titulo: poema.titulo.trim(),
+    contenido: poema.contenido.trim(),
+    autor: poema.autor.trim(),
+  };
+  if (poema.nacionalidad?.trim()) body.nacionalidad = poema.nacionalidad.trim();
+  if (poema.epoca?.trim()) body.epoca = poema.epoca.trim();
+  if (poema.sentimiento) body.sentimiento = poema.sentimiento;
+
+  const res = await fetch(`${API_BASE_URL}/api/v1/poems`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Admin-Key": adminKey },
+    body: JSON.stringify(body),
+    cache: "no-store",
+  });
+  if (res.status === 403) throw new Error("La clave no es correcta.");
+  if (!res.ok) {
+    const data = await res.json().catch(() => null);
+    const detail = data?.detail;
+    const msg = Array.isArray(detail)
+      ? detail.map((d: { msg?: string }) => d.msg).join(" · ")
+      : typeof detail === "string"
+        ? detail
+        : `Error ${res.status}`;
+    throw new Error(msg);
+  }
+  return ((await res.json()) as { poem: Poema }).poem;
+}

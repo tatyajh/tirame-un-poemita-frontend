@@ -33,6 +33,9 @@ export default function SiteHeader() {
           <Link href="/buscar" className="hover:text-ink-red transition-colors">
             buscar
           </Link>
+          <Link href="/agregar" className="hover:text-ink-red transition-colors">
+            agregar
+          </Link>
           <button
             type="button"
             onClick={toggleSound}
