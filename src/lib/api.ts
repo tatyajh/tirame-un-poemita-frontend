@@ -165,14 +165,13 @@ export async function listarAutores(search?: string, limit = 60): Promise<Respue
 }
 
 export interface ProsodyOverrides {
-  prosody_mode?: "continuous" | "break" | "segment" | "sts";
+  /** "break": one piece with marked pauses; "segment": verse by verse. */
+  prosody_mode?: "break" | "segment";
   break_seconds?: number;
-  stanza_break_seconds?: number;
   stability?: number;
   similarity_boost?: number;
   style?: number;
   speed?: number;
-  use_speaker_boost?: boolean;
   /** Which reading to preview (default: the server's, "guia"). */
   lectura?: Lectura;
 }
@@ -190,8 +189,9 @@ export async function verificarClaveAjustes(clave: string): Promise<boolean> {
 export interface RespuestaPreview {
   audio_url: string;
   poem_id: number;
-  duration_seconds: number;
-  settings_used: Required<Omit<ProsodyOverrides, "use_speaker_boost">>;
+  duration_seconds: number | null;
+  preset_voz: string;
+  settings_used: Record<string, string | number | null>;
 }
 
 export async function previsualizarProsodia(

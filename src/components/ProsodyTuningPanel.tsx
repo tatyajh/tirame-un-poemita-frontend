@@ -28,11 +28,10 @@ function guardarClave(clave: string | null) {
   }
 }
 
-const DEFAULTS: Required<Omit<ProsodyOverrides, "use_speaker_boost">> = {
+const DEFAULTS: Required<ProsodyOverrides> = {
   lectura: "guia",
-  prosody_mode: "continuous",
+  prosody_mode: "break",
   break_seconds: 0.5,
-  stanza_break_seconds: 1.0,
   stability: 0.65,
   similarity_boost: 1.0,
   style: 0.2,
@@ -142,7 +141,7 @@ export default function ProsodyTuningPanel({
       const result = await previsualizarProsodia(poemId, values, undefined, clave || undefined);
       setPreviewUrl(audioUrlFor(result.audio_url));
       setPreviewInfo(
-        `${result.duration_seconds.toFixed(1)}s · ${
+        `${(result.duration_seconds ?? 0).toFixed(1)}s · ${
           values.lectura === "guia" ? "Edgar guiado" : "Voz de Edgar"
         } · modo ${values.prosody_mode}`,
       );
@@ -260,7 +259,7 @@ export default function ProsodyTuningPanel({
         modo de lectura
       </span>
       <div className="flex gap-2 font-mono-poem text-xs">
-        {(["continuous", "break", "segment", "sts"] as const).map((mode) => (
+        {(["break", "segment"] as const).map((mode) => (
           <button
             key={mode}
             type="button"
@@ -276,19 +275,19 @@ export default function ProsodyTuningPanel({
         ))}
       </div>
 
-      {values.prosody_mode === "continuous" && (
-        <p className="font-mono-poem text-[11px] text-ink-soft border border-ink/15 px-3 py-2">
-          En modo <strong>continuous</strong> el poema se lee de corrido en una sola pieza y la
-          voz hace sus propias pausas; al final se aplica el cierre en la última palabra.
-        </p>
-      )}
-
-      {values.prosody_mode === "sts" && (
-        <p className="font-mono-poem text-[11px] text-ink-soft border border-ink/15 px-3 py-2">
-          En modo <strong>sts</strong> el ritmo viene de una lectura natural convertida a la
-          voz — las pausas por línea/estrofa no aplican aquí, solo los parámetros de voz.
-        </p>
-      )}
+      <p className="font-mono-poem text-[11px] text-ink-soft border border-ink/15 px-3 py-2">
+        {values.prosody_mode === "break" ? (
+          <>
+            En modo <strong>break</strong> el poema se lee en una sola pieza con pausas marcadas
+            entre versos.
+          </>
+        ) : (
+          <>
+            En modo <strong>segment</strong> cada verso se lee por separado y se unen con silencio
+            exacto entre ellos.
+          </>
+        )}
+      </p>
 
       {values.lectura === "guia" && (
         <p className="font-mono-poem text-[11px] text-ink-soft border border-ink/15 px-3 py-2">
@@ -298,26 +297,14 @@ export default function ProsodyTuningPanel({
       )}
 
       <div className="grid grid-cols-2 gap-x-6 gap-y-3">
-        {(values.prosody_mode === "break" || values.prosody_mode === "segment") && (
-          <>
-            <Slider
-              label="pausa por línea (s)"
-              value={values.break_seconds}
-              min={0}
-              max={2}
-              step={0.05}
-              onChange={(v) => set("break_seconds", v)}
-            />
-            <Slider
-              label="pausa por estrofa (s)"
-              value={values.stanza_break_seconds}
-              min={0}
-              max={4}
-              step={0.1}
-              onChange={(v) => set("stanza_break_seconds", v)}
-            />
-          </>
-        )}
+        <Slider
+          label="pausa entre versos (s)"
+          value={values.break_seconds}
+          min={0.1}
+          max={3}
+          step={0.05}
+          onChange={(v) => set("break_seconds", v)}
+        />
         {values.lectura === "directa" && (
           <>
         <Slider
