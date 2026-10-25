@@ -13,6 +13,15 @@ export interface Poema {
   titulo: string;
   contenido: string;
   autor: Autor | null;
+  sentimiento?: string | null;
+  sentimiento_nombre?: string | null;
+}
+
+export interface Sentimiento {
+  slug: string;
+  nombre: string;
+  descripcion: string;
+  total: number;
 }
 
 export interface ResultadoBusqueda {
@@ -94,9 +103,19 @@ export function audioUrlFor(url: string) {
   return `${API_BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
 }
 
-export async function getPoemaAleatorio(): Promise<Poema> {
-  const data = await apiGet<{ poem: Poema }>("/api/v1/poems/random");
+export async function getPoemaAleatorio(
+  filtros: { sentimiento?: string | null; autor?: string | null } = {},
+): Promise<Poema> {
+  const params: Record<string, string> = {};
+  if (filtros.sentimiento) params.sentimiento = filtros.sentimiento;
+  if (filtros.autor) params.autor = filtros.autor;
+  const data = await apiGet<{ poem: Poema }>("/api/v1/poems/random", params);
   return data.poem;
+}
+
+export async function listarSentimientos(): Promise<Sentimiento[]> {
+  const data = await apiGet<{ sentimientos: Sentimiento[] }>("/api/v1/sentimientos");
+  return data.sentimientos;
 }
 
 export async function getPoemaPorId(id: number | string): Promise<Poema> {

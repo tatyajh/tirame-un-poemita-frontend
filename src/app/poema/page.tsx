@@ -71,6 +71,11 @@ function PoemaContent() {
           </Link>
         )}
         <h1 className="font-type text-2xl sm:text-3xl mt-1">{poema.titulo}</h1>
+        {poema.sentimiento_nombre && (
+          <p className="font-mono-poem text-xs text-ink-red/80 mt-1">
+            {poema.sentimiento_nombre.toLowerCase()}
+          </p>
+        )}
       </div>
 
       <TypewriterText
