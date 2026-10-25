@@ -1,9 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { audioUrlFor, previsualizarProsodia, type ProsodyOverrides } from "@/lib/api";
+import {
+  audioUrlFor,
+  previsualizarProsodia,
+  verificarClaveAjustes,
+  type Lectura,
+  type ProsodyOverrides,
+} from "@/lib/api";
+
+const CLAVE_KEY = "tirame-ajustes-clave";
+
+function claveGuardada(): string | null {
+  try {
+    return window.localStorage.getItem(CLAVE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function guardarClave(clave: string | null) {
+  try {
+    if (clave) window.localStorage.setItem(CLAVE_KEY, clave);
+    else window.localStorage.removeItem(CLAVE_KEY);
+  } catch {
+    // storage unavailable: the key is asked again next time
+  }
+}
 
 const DEFAULTS: Required<Omit<ProsodyOverrides, "use_speaker_boost">> = {
+  lectura: "guia",
   prosody_mode: "continuous",
   break_seconds: 0.5,
   stanza_break_seconds: 1.0,
@@ -55,11 +81,56 @@ export default function ProsodyTuningPanel({
   previewKey?: string;
 }) {
   const [open, setOpen] = useState(false);
+  const [clave, setClave] = useState<string | null>(() => previewKey || claveGuardada());
+  const [desbloqueado, setDesbloqueado] = useState(false);
+  const [claveInput, setClaveInput] = useState("");
+  const [verificando, setVerificando] = useState(false);
+  const [claveError, setClaveError] = useState<string | null>(null);
   const [values, setValues] = useState(DEFAULTS);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewInfo, setPreviewInfo] = useState<string | null>(null);
+
+  async function abrir() {
+    setOpen(true);
+    if (desbloqueado || !clave) return;
+    // A key saved earlier (or passed in the link): check it's still valid.
+    setVerificando(true);
+    const ok = await verificarClaveAjustes(clave).catch(() => false);
+    setVerificando(false);
+    if (ok) {
+      setDesbloqueado(true);
+    } else {
+      guardarClave(null);
+      setClave(null);
+    }
+  }
+
+  async function desbloquear(e: React.FormEvent) {
+    e.preventDefault();
+    const intento = claveInput.trim();
+    if (!intento) return;
+    setVerificando(true);
+    setClaveError(null);
+    const ok = await verificarClaveAjustes(intento).catch(() => false);
+    setVerificando(false);
+    if (ok) {
+      guardarClave(intento);
+      setClave(intento);
+      setDesbloqueado(true);
+      setClaveInput("");
+    } else {
+      setClaveError("Clave incorrecta.");
+    }
+  }
+
+  function bloquear() {
+    guardarClave(null);
+    setClave(null);
+    setDesbloqueado(false);
+    setOpen(false);
+  }
 
   const set = <K extends keyof typeof values>(key: K, value: (typeof values)[K]) =>
     setValues((v) => ({ ...v, [key]: value }));
@@ -68,9 +139,13 @@ export default function ProsodyTuningPanel({
     setLoading(true);
     setError(null);
     try {
-      const result = await previsualizarProsodia(poemId, values, undefined, previewKey || undefined);
+      const result = await previsualizarProsodia(poemId, values, undefined, clave || undefined);
       setPreviewUrl(audioUrlFor(result.audio_url));
-      setPreviewInfo(`${result.duration_seconds.toFixed(1)}s · modo ${values.prosody_mode}`);
+      setPreviewInfo(
+        `${result.duration_seconds.toFixed(1)}s · ${
+          values.lectura === "guia" ? "Edgar guiado" : "Voz de Edgar"
+        } · modo ${values.prosody_mode}`,
+      );
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo generar el preview.");
     } finally {
@@ -82,27 +157,108 @@ export default function ProsodyTuningPanel({
     return (
       <button
         type="button"
-        onClick={() => setOpen(true)}
-        className="self-start font-mono-poem text-[11px] uppercase tracking-wide text-ink-soft border border-ink/20 px-2 py-1 hover:border-ink-red hover:text-ink-red transition-colors"
+        onClick={abrir}
+        className="self-start inline-flex items-center gap-2 font-mono-poem text-xs uppercase tracking-wide text-ink-soft border border-ink/30 px-3 py-1.5 hover:border-ink-red hover:text-ink-red transition-colors"
       >
-        ⚙ ajustar prosodia en vivo
+        <span aria-hidden="true">⚙</span> ajustes de lectura
       </button>
+    );
+  }
+
+  if (!desbloqueado) {
+    return (
+      <div className="border border-ink/20 bg-paper-deep/40 p-4 flex flex-col gap-3 max-w-md">
+        <div className="flex items-center justify-between">
+          <h3 className="font-type text-sm">ajustes de lectura</h3>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="font-mono-poem text-xs text-ink-soft hover:text-ink-red"
+          >
+            cerrar
+          </button>
+        </div>
+        {verificando && !claveInput ? (
+          <p className="font-mono-poem text-xs text-ink-soft animate-pulse">verificando…</p>
+        ) : (
+          <form onSubmit={desbloquear} className="flex flex-col gap-2">
+            <label htmlFor="clave-ajustes" className="font-mono-poem text-xs text-ink-soft">
+              Escribe la clave para ajustar la lectura (cada prueba gasta créditos de voz).
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="clave-ajustes"
+                type="password"
+                autoComplete="off"
+                value={claveInput}
+                onChange={(e) => setClaveInput(e.target.value)}
+                className="flex-1 border border-ink/30 bg-paper px-3 py-1.5 font-mono-poem text-sm outline-none focus:border-ink-red"
+              />
+              <button
+                type="submit"
+                disabled={verificando}
+                className="border-2 border-ink px-3 py-1 font-type text-xs uppercase tracking-wide hover:bg-ink hover:text-paper transition-colors disabled:opacity-50"
+              >
+                {verificando ? "…" : "entrar"}
+              </button>
+            </div>
+            {claveError && <p className="font-mono-poem text-xs text-ink-red">{claveError}</p>}
+          </form>
+        )}
+      </div>
     );
   }
 
   return (
     <div className="border border-ink/20 bg-paper-deep/40 p-4 flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h3 className="font-type text-sm">prosodia en vivo</h3>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="font-mono-poem text-xs text-ink-soft hover:text-ink-red"
-        >
-          cerrar
-        </button>
+        <h3 className="font-type text-sm">ajustes de lectura</h3>
+        <div className="flex gap-4">
+          <button
+            type="button"
+            onClick={bloquear}
+            className="font-mono-poem text-xs text-ink-soft hover:text-ink-red"
+          >
+            salir
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            className="font-mono-poem text-xs text-ink-soft hover:text-ink-red"
+          >
+            cerrar
+          </button>
+        </div>
       </div>
 
+      <div className="flex flex-col gap-1">
+        <span className="font-mono-poem text-[11px] uppercase tracking-wide text-ink-soft">voz</span>
+        <div className="flex gap-2 font-mono-poem text-xs">
+          {(
+            [
+              ["guia", "Edgar guiado"],
+              ["directa", "Voz de Edgar"],
+            ] as [Lectura, string][]
+          ).map(([v, nombre]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => set("lectura", v)}
+              className={`px-3 py-1 border uppercase tracking-wide ${
+                values.lectura === v
+                  ? "border-ink-red text-ink-red"
+                  : "border-ink/20 text-ink-soft hover:border-ink/40"
+              }`}
+            >
+              {nombre}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <span className="font-mono-poem text-[11px] uppercase tracking-wide text-ink-soft -mb-2">
+        modo de lectura
+      </span>
       <div className="flex gap-2 font-mono-poem text-xs">
         {(["continuous", "break", "segment", "sts"] as const).map((mode) => (
           <button
@@ -134,6 +290,13 @@ export default function ProsodyTuningPanel({
         </p>
       )}
 
+      {values.lectura === "guia" && (
+        <p className="font-mono-poem text-[11px] text-ink-soft border border-ink/15 px-3 py-2">
+          En <strong>Edgar guiado</strong> el tono de la voz lo da el Voice Changer, así que aquí
+          solo se ajustan el modo, las pausas y la velocidad.
+        </p>
+      )}
+
       <div className="grid grid-cols-2 gap-x-6 gap-y-3">
         {(values.prosody_mode === "break" || values.prosody_mode === "segment") && (
           <>
@@ -155,6 +318,8 @@ export default function ProsodyTuningPanel({
             />
           </>
         )}
+        {values.lectura === "directa" && (
+          <>
         <Slider
           label="stability"
           value={values.stability}
@@ -179,6 +344,8 @@ export default function ProsodyTuningPanel({
           step={0.01}
           onChange={(v) => set("style", v)}
         />
+          </>
+        )}
         <Slider
           label="speed"
           value={values.speed}
@@ -203,7 +370,7 @@ export default function ProsodyTuningPanel({
           onClick={() => setValues(DEFAULTS)}
           className="font-mono-poem text-xs text-ink-soft hover:text-ink-red"
         >
-          reset a poetico_intimo
+          volver a lo predeterminado
         </button>
       </div>
 

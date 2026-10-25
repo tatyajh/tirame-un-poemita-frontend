@@ -12,8 +12,8 @@ import { PoemNotFoundError, etiquetaSentimientos, getPoemaPorId, type Poema } fr
 function PoemaContent() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id") ?? "";
-  // The voice-tuning panel spends ElevenLabs credits, so it only shows for
-  // the team: open a poem with ?ajustes=<PREVIEW_KEY> to use it.
+  // The tuning panel is visible to everyone but asks for the key (it spends
+  // ElevenLabs credits); ?ajustes=<key> in the link skips the prompt.
   const ajustesKey = searchParams.get("ajustes");
   const [poema, setPoema] = useState<Poema | null | undefined>(undefined);
   const [notFound, setNotFound] = useState(false);
@@ -86,9 +86,7 @@ function PoemaContent() {
       />
 
       <PoemPlayerSection poemId={poema.id} />
-      {ajustesKey !== null && (
-        <ProsodyTuningPanel poemId={poema.id} previewKey={ajustesKey} />
-      )}
+      <ProsodyTuningPanel poemId={poema.id} previewKey={ajustesKey ?? undefined} />
     </div>
   );
 }

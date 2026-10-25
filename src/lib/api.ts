@@ -173,6 +173,18 @@ export interface ProsodyOverrides {
   style?: number;
   speed?: number;
   use_speaker_boost?: boolean;
+  /** Which reading to preview (default: the server's, "guia"). */
+  lectura?: Lectura;
+}
+
+/** True if the tuning-panel key is right. */
+export async function verificarClaveAjustes(clave: string): Promise<boolean> {
+  const res = await fetch(`${API_BASE_URL}/api/v1/ajustes/verificar`, {
+    method: "POST",
+    headers: { "X-Preview-Key": clave },
+    cache: "no-store",
+  });
+  return res.ok;
 }
 
 export interface RespuestaPreview {
