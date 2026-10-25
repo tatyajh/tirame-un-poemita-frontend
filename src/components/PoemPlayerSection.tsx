@@ -196,8 +196,9 @@ export default function PoemPlayerSection({ poemId }: { poemId: number }) {
           <p className="animate-pulse">grabando la voz sobre la cinta…</p>
           {slowKey === key && (
             <p className="mt-1 font-mono-poem text-xs">
-              es la primera vez que se lee este poema con esta voz: tarda unos segundos en
-              grabarse.
+              es la primera vez que se lee este poema con esta voz: se está grabando. Un poema
+              corto tarda menos de un minuto; uno largo puede tardar varios. Puedes dejar la
+              página abierta o volver luego: la grabación sigue y queda guardada.
             </p>
           )}
         </div>
