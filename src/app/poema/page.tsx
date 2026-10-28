@@ -80,6 +80,7 @@ function PoemaContent() {
 
       <TypewriterText
         text={poema.contenido}
+        seenId={poema.id}
         speed={10}
         sound={false}
         className="font-mono-poem text-base sm:text-lg leading-relaxed whitespace-pre-wrap"

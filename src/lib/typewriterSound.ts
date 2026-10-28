@@ -1,4 +1,5 @@
 let ctx: AudioContext | null = null;
+let noiseBuffer: AudioBuffer | null = null;
 
 function getContext(): AudioContext | null {
   if (typeof window === "undefined") return null;
@@ -7,67 +8,89 @@ function getContext(): AudioContext | null {
     if (!AudioCtx) return null;
     ctx = new AudioCtx();
   }
+  if (ctx.state === "suspended") ctx.resume();
   return ctx;
+}
+
+/** Short decaying noise, made once and reused for every key. */
+function getNoise(audioCtx: AudioContext): AudioBuffer {
+  if (!noiseBuffer || noiseBuffer.sampleRate !== audioCtx.sampleRate) {
+    const length = Math.floor(audioCtx.sampleRate * 0.06);
+    noiseBuffer = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+    const data = noiseBuffer.getChannelData(0);
+    for (let i = 0; i < length; i++) {
+      data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, 3);
+    }
+  }
+  return noiseBuffer;
 }
 
 export function isSoundEnabled(): boolean {
   if (typeof window === "undefined") return true;
-  const stored = window.localStorage.getItem("tup-sound");
-  return stored === null ? true : stored === "on";
+  try {
+    const stored = window.localStorage.getItem("tup-sound");
+    return stored === null ? true : stored === "on";
+  } catch {
+    return true;
+  }
 }
 
 export function setSoundEnabled(enabled: boolean) {
-  window.localStorage.setItem("tup-sound", enabled ? "on" : "off");
+  try {
+    window.localStorage.setItem("tup-sound", enabled ? "on" : "off");
+  } catch {
+    // storage unavailable: the choice lasts until the page is reloaded
+  }
 }
 
-/** Synthesized typewriter key strike: a short filtered noise burst + click. */
+/** A burst of noise through a band-pass filter, with its own envelope. */
+function burst(audioCtx: AudioContext, at: number, freq: number, q: number, peak: number, length: number) {
+  const src = audioCtx.createBufferSource();
+  src.buffer = getNoise(audioCtx);
+  src.playbackRate.value = 0.9 + Math.random() * 0.2;
+  const filter = audioCtx.createBiquadFilter();
+  filter.type = "bandpass";
+  filter.frequency.value = freq;
+  filter.Q.value = q;
+  const gain = audioCtx.createGain();
+  gain.gain.setValueAtTime(peak, at);
+  gain.gain.exponentialRampToValueAtTime(0.0001, at + length);
+  src.connect(filter).connect(gain).connect(audioCtx.destination);
+  src.start(at);
+  src.stop(at + length + 0.01);
+}
+
+/** A typewriter key strike: the type bar's metallic clack on the platen
+ * plus the low thud of the key going down. Slightly different every time. */
 export function playKeystroke() {
   if (!isSoundEnabled()) return;
   const audioCtx = getContext();
   if (!audioCtx) return;
-  if (audioCtx.state === "suspended") audioCtx.resume();
-
   const now = audioCtx.currentTime;
-
-  const bufferSize = Math.floor(audioCtx.sampleRate * 0.02);
-  const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-  const data = buffer.getChannelData(0);
-  for (let i = 0; i < bufferSize; i++) {
-    data[i] = (Math.random() * 2 - 1) * (1 - i / bufferSize);
-  }
-  const noise = audioCtx.createBufferSource();
-  noise.buffer = buffer;
-
-  const filter = audioCtx.createBiquadFilter();
-  filter.type = "highpass";
-  filter.frequency.value = 1800 + Math.random() * 800;
-
-  const gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(0.35, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-
-  noise.connect(filter).connect(gain).connect(audioCtx.destination);
-  noise.start(now);
-  noise.stop(now + 0.05);
+  const v = 0.8 + Math.random() * 0.4;
+  burst(audioCtx, now, 2600 + Math.random() * 900, 1.2, 0.5 * v, 0.025); // clack
+  burst(audioCtx, now + 0.004, 180 + Math.random() * 60, 0.9, 0.9 * v, 0.06); // thud
 }
 
+/** End of line: the carriage bell, then the return lever's ratchet. */
 export function playCarriageReturn() {
   if (!isSoundEnabled()) return;
   const audioCtx = getContext();
   if (!audioCtx) return;
-  if (audioCtx.state === "suspended") audioCtx.resume();
-
   const now = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator();
-  osc.type = "square";
-  osc.frequency.setValueAtTime(1200, now);
-  osc.frequency.exponentialRampToValueAtTime(600, now + 0.12);
 
-  const gain = audioCtx.createGain();
-  gain.gain.setValueAtTime(0.12, now);
-  gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-
-  osc.connect(gain).connect(audioCtx.destination);
-  osc.start(now);
-  osc.stop(now + 0.16);
+  for (const [freq, level] of [[2350, 0.08], [4700, 0.025], [7050, 0.01]] as const) {
+    const osc = audioCtx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.value = freq;
+    const gain = audioCtx.createGain();
+    gain.gain.setValueAtTime(level, now);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.9);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(now);
+    osc.stop(now + 0.92);
+  }
+  for (let i = 0; i < 6; i++) {
+    burst(audioCtx, now + 0.12 + i * 0.022, 1500, 2, 0.12, 0.015); // ratchet
+  }
 }

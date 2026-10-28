@@ -106,6 +106,7 @@ export default function Home() {
               <TypewriterText
                 key={poema.id}
                 text={poema.contenido}
+                seenId={poema.id}
                 speed={16}
                 className="font-mono-poem text-base sm:text-lg leading-relaxed whitespace-pre-wrap"
               />
