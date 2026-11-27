@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import SearchBar from "@/components/SearchBar";
-import TypewriterText from "@/components/TypewriterText";
+import PoemText from "@/components/PoemText";
 import {
   getPoemaAleatorio,
   listarSentimientos,
@@ -103,11 +103,9 @@ export default function Home() {
               ) : (
                 <div className="mb-5" />
               )}
-              <TypewriterText
+              <PoemText
                 key={poema.id}
                 text={poema.contenido}
-                seenId={poema.id}
-                speed={16}
                 className="font-mono-poem text-base sm:text-lg leading-relaxed whitespace-pre-wrap"
               />
             </>

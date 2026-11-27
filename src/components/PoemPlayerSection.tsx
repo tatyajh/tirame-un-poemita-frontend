@@ -2,19 +2,13 @@
 
 import { useEffect, useState } from "react";
 import TypewriterAudioPlayer from "@/components/TypewriterAudioPlayer";
-import { audioUrlFor, getAudioDePoema, type Lectura } from "@/lib/api";
+import { audioUrlFor, getAudioDePoema, SinLecturaError } from "@/lib/api";
 
-// "guia" (Voice Changer) is the default reading.
-const OPCIONES: { value: Lectura; label: string; detalle: string }[] = [
-  {
-    value: "guia",
-    label: "Edgar guiado",
-    detalle: "un narrador paisa lee y se convierte a su voz",
-  },
-  { value: "directa", label: "Voz de Edgar", detalle: "su voz clonada lee el poema" },
-];
-// v2: the default changed to "guia", so earlier saved choices start over.
-const STORAGE_KEY = "tirame-lectura-v2";
+// One voice only: "Edgar guiado" (a narrator's reading turned into Edgar's
+// voice). The readings are made ahead of time, so the player loads with the
+// page and is ready to play; nothing is synthesized while someone listens.
+const LECTURA = "guia";
+const NARRADOR = "Edgar Augusto Jaramillo Muñoz";
 const MUSICA_KEY = "tirame-musica";
 
 function musicaGuardada(): boolean {
@@ -25,18 +19,10 @@ function musicaGuardada(): boolean {
   }
 }
 
-function lecturaGuardada(): Lectura {
-  try {
-    const v = window.localStorage.getItem(STORAGE_KEY);
-    return v === "directa" ? "directa" : "guia";
-  } catch {
-    return "guia";
-  }
-}
-
 type Resultado =
-  | { key: string; audioUrl: string; narrador: string | null; conMusica: boolean; error: false }
-  | { key: string; error: true };
+  | { key: string; estado: "lista"; audioUrl: string; conMusica: boolean }
+  | { key: string; estado: "sin_lectura" }
+  | { key: string; estado: "error" };
 
 function IconoMusica({ encendida }: { encendida: boolean }) {
   return (
@@ -62,20 +48,9 @@ function IconoMusica({ encendida }: { encendida: boolean }) {
 
 export default function PoemPlayerSection({ poemId }: { poemId: number }) {
   const [attempt, setAttempt] = useState(0);
-  const [lectura, setLectura] = useState<Lectura>(lecturaGuardada);
   const [musica, setMusica] = useState<boolean>(musicaGuardada);
   const [resultado, setResultado] = useState<Resultado | null>(null);
-  const [slowKey, setSlowKey] = useState<string | null>(null);
-  const key = `${poemId}:${lectura}:${musica}:${attempt}`;
-
-  function escoger(value: Lectura) {
-    setLectura(value);
-    try {
-      window.localStorage.setItem(STORAGE_KEY, value);
-    } catch {
-      // storage unavailable (private mode): the choice just isn't remembered
-    }
-  }
+  const key = `${poemId}:${musica}:${attempt}`;
 
   function alternarMusica() {
     const value = !musica;
@@ -89,56 +64,26 @@ export default function PoemPlayerSection({ poemId }: { poemId: number }) {
 
   useEffect(() => {
     const controller = new AbortController();
-    // A poem read for the first time is synthesized on the spot (~20-40 s).
-    const slowTimer = setTimeout(() => setSlowKey(key), 4000);
-
-    getAudioDePoema(poemId, musica, controller.signal, lectura)
-      .then((audio) => {
+    getAudioDePoema(poemId, musica, controller.signal, LECTURA)
+      .then((audio) =>
         setResultado({
           key,
+          estado: "lista",
           audioUrl: audioUrlFor(audio.audio_url),
-          narrador: audio.narrador,
           conMusica: audio.with_music,
-          error: false,
-        });
-      })
+        }),
+      )
       .catch((err) => {
         if (err instanceof DOMException && err.name === "AbortError") return;
-        setResultado({ key, error: true });
-      })
-      .finally(() => clearTimeout(slowTimer));
-
-    return () => {
-      clearTimeout(slowTimer);
-      controller.abort();
-    };
-  }, [poemId, lectura, musica, key]);
+        setResultado({ key, estado: err instanceof SinLecturaError ? "sin_lectura" : "error" });
+      });
+    return () => controller.abort();
+  }, [poemId, musica, key]);
 
   const actual = resultado?.key === key ? resultado : null;
-  const actualListo = actual && !actual.error ? actual : null;
-  const opcion = OPCIONES.find((o) => o.value === lectura) ?? OPCIONES[0];
 
-  const selector = (
-    <div className="mb-3" role="radiogroup" aria-label="Voz de la lectura">
-      <div className="flex flex-wrap gap-2 font-mono-poem text-xs">
-        {OPCIONES.map((o) => (
-          <button
-            key={o.value}
-            type="button"
-            role="radio"
-            aria-checked={lectura === o.value}
-            onClick={() => escoger(o.value)}
-            className={`px-3 py-1 border uppercase tracking-wide transition-colors ${
-              lectura === o.value
-                ? "border-ink-red text-ink-red"
-                : "border-ink/20 text-ink-soft hover:border-ink/40"
-            }`}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
-      <p className="mt-1 font-mono-poem text-[11px] text-ink-soft">{opcion.detalle}</p>
+  const interruptorMusica = (
+    <div className="mb-3">
       <button
         type="button"
         role="switch"
@@ -146,7 +91,7 @@ export default function PoemPlayerSection({ poemId }: { poemId: number }) {
         aria-label={musica ? "Música encendida" : "Música apagada"}
         title={musica ? "Apagar la música" : "Encender la música"}
         onClick={alternarMusica}
-        className="mt-3 inline-flex items-center gap-2 group"
+        className="inline-flex items-center gap-2 group"
       >
         <IconoMusica encendida={musica} />
         <span
@@ -162,7 +107,7 @@ export default function PoemPlayerSection({ poemId }: { poemId: number }) {
           />
         </span>
       </button>
-      {musica && actualListo && !actualListo.conMusica && (
+      {musica && actual?.estado === "lista" && !actual.conMusica && (
         <p className="mt-1 font-mono-poem text-[11px] text-ink-soft">
           este poema todavía no tiene música: suena solo la voz.
         </p>
@@ -170,46 +115,39 @@ export default function PoemPlayerSection({ poemId }: { poemId: number }) {
     </div>
   );
 
-  if (actual?.error) {
+  if (actual?.estado === "sin_lectura") {
     return (
-      <div>
-        {selector}
-        <div className="font-mono-poem text-ink-red border border-ink-red/40 px-4 py-3">
-          <p>La cinta se rompió al grabar este poema. Intenta de nuevo en un momento.</p>
-          <button
-            type="button"
-            onClick={() => setAttempt((n) => n + 1)}
-            className="mt-2 border border-ink-red/60 px-3 py-1 text-sm hover:bg-ink-red hover:text-paper transition-colors"
-          >
-            volver a grabar
-          </button>
-        </div>
-      </div>
+      <p className="font-mono-poem text-sm text-ink-soft border border-ink/15 px-4 py-3">
+        Este poema todavía no tiene lectura en voz alta.
+      </p>
     );
   }
 
-  if (!actual) {
+  if (actual?.estado === "error") {
     return (
-      <div>
-        {selector}
-        <div role="status" aria-live="polite" className="font-type text-ink-soft">
-          <p className="animate-pulse">grabando la voz sobre la cinta…</p>
-          {slowKey === key && (
-            <p className="mt-1 font-mono-poem text-xs">
-              es la primera vez que se lee este poema con esta voz: se está grabando. Un poema
-              corto tarda menos de un minuto; uno largo puede tardar varios. Puedes dejar la
-              página abierta o volver luego: la grabación sigue y queda guardada.
-            </p>
-          )}
-        </div>
+      <div className="font-mono-poem text-ink-red border border-ink-red/40 px-4 py-3">
+        <p>No se pudo cargar la lectura de este poema.</p>
+        <button
+          type="button"
+          onClick={() => setAttempt((n) => n + 1)}
+          className="mt-2 border border-ink-red/60 px-3 py-1 text-sm hover:bg-ink-red hover:text-paper transition-colors"
+        >
+          intentar de nuevo
+        </button>
       </div>
     );
   }
 
   return (
     <div>
-      {selector}
-      <TypewriterAudioPlayer src={actual.audioUrl} narrador={actual.narrador ?? opcion.label} />
+      {interruptorMusica}
+      {actual?.estado === "lista" ? (
+        <TypewriterAudioPlayer src={actual.audioUrl} narrador={NARRADOR} />
+      ) : (
+        <p role="status" aria-live="polite" className="font-type text-ink-soft animate-pulse">
+          cargando la lectura…
+        </p>
+      )}
     </div>
   );
 }

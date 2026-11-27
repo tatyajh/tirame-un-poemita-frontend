@@ -6,7 +6,7 @@ import { useSearchParams } from "next/navigation";
 import MachineDown from "@/components/MachineDown";
 import PoemPlayerSection from "@/components/PoemPlayerSection";
 import ProsodyTuningPanel from "@/components/ProsodyTuningPanel";
-import TypewriterText from "@/components/TypewriterText";
+import PoemText from "@/components/PoemText";
 import { PoemNotFoundError, etiquetaSentimientos, getPoemaPorId, type Poema } from "@/lib/api";
 
 function PoemaContent() {
@@ -78,11 +78,9 @@ function PoemaContent() {
         )}
       </div>
 
-      <TypewriterText
+      <PoemText
+        key={poema.id}
         text={poema.contenido}
-        seenId={poema.id}
-        speed={10}
-        sound={false}
         className="font-mono-poem text-base sm:text-lg leading-relaxed whitespace-pre-wrap"
       />
 

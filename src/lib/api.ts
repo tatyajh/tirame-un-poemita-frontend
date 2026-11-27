@@ -70,6 +70,10 @@ export interface SugerenciaError {
   id: number | null;
 }
 
+/** The poem exists but its reading was not produced yet (the server does
+ * not synthesize while someone listens). */
+export class SinLecturaError extends Error {}
+
 export class PoemNotFoundError extends Error {
   suggestions: SugerenciaError[];
   constructor(message: string, suggestions: SugerenciaError[] = []) {
@@ -99,6 +103,9 @@ async function apiGet<T>(
     if (res.status === 404) {
       const body = await res.json().catch(() => null);
       const detail = body?.detail;
+      if (detail?.error === "sin_lectura") {
+        throw new SinLecturaError(detail?.message ?? "Este poema todavía no tiene lectura.");
+      }
       throw new PoemNotFoundError(
         detail?.message ?? "No se encontró ningún poema.",
         detail?.suggestions ?? [],
